@@ -1,4 +1,4 @@
-#include "OpenDataRequestor.h"
+#include "OpenDataRequestor.hpp"
 #include <QDir>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>

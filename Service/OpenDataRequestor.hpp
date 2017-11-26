@@ -19,39 +19,34 @@
  ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  ***************************************************************************************/
 
-#ifndef BICINGSERVICE_HPP
-#define BICINGSERVICE_HPP
+#ifndef OPENDATAREQUESTOR_H
+#define OPENDATAREQUESTOR_H
 
-#include "OpenDataRequestor.h"
-#include <QtService>
-#include <QTimer>
-#include <QDate>
-#include <QProcess>
+#include <QObject>
+#include <QFile>
 
-class QThread;
+class QNetworkReply;
+class QNetworkAccessManager;
 
-class BicingService : public QObject, public QtService<QCoreApplication>
+class OpenDataRequestor : public QObject
 {
-   Q_OBJECT
+      Q_OBJECT
 
    signals:
-      void signalLunchRequestor();
+      void signalTaskDone();
 
    public:
-      explicit BicingService(int argc, char **argv);
-      ~BicingService ();
+      explicit OpenDataRequestor(QObject *parent = nullptr);
+      ~OpenDataRequestor();
 
-   protected:
-      void start() override;
-      void pause() override;
-      void resume () override;
+   public slots:
+      void makeRequest();
 
    private:
-      OpenDataRequestor *requestor = nullptr;
-      QTimer *mTimer = nullptr;
+      QNetworkAccessManager *manager = nullptr;
 
    private slots:
-      void slotCreateRequestor();
+      void replyFinished(QNetworkReply *reply);
 };
 
-#endif // BICINGSERVICE_HPP
+#endif // OPENDATAREQUESTOR_H

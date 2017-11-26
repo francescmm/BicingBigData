@@ -15,7 +15,7 @@ SOURCES += main.cpp \
 include(qtservice/qtservice.pri)
 
 HEADERS += \
-    OpenDataRequestor.h \
+    OpenDataRequestor.hpp \
     BicingService.hpp
 
 MOC_DIR = moc
