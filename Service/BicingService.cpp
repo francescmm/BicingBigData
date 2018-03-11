@@ -1,6 +1,5 @@
 #include "BicingService.hpp"
 #include <QThread>
-#include <QDebug>
 
 BicingService::BicingService(int argc, char **argv)
    : QObject(), QtService<QCoreApplication>(argc, argv, "BicingBigData Daemon")
@@ -38,8 +37,6 @@ void BicingService::start()
 
       mTimer->start ();
    }
-   else
-      qDebug() << "No path specified!";
 }
 
 void BicingService::pause()
