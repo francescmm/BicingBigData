@@ -2,32 +2,10 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-static const char * Path = "E:";
-
-BigDataContainer::BigDataContainer()
+BigDataContainer::BigDataContainer(const QString &path) : mPath (path)
 {
     dbCon = QSqlDatabase::addDatabase("QSQLITE");
-    dbCon.setDatabaseName(QString("%1/testing.db").arg(Path));
-
-    if (dbCon.open())
-    {
-        QFile dbFile(":/db_structure");
-
-        if (dbFile.open(QIODevice::ReadOnly))
-        {
-            auto dbFileContent = dbFile.readAll();
-            auto statements = dbFileContent.split(';');
-
-            for (const auto s : statements)
-            {
-                QSqlQuery query;
-                query.exec(s);
-            }
-
-            dbCon.close();
-            dbFile.close();
-        }
-    }
+    dbCon.setDatabaseName(QString("%1testing.db").arg(mPath));
 }
 
 void BigDataContainer::init()

@@ -9,7 +9,7 @@
 class BigDataContainer
 {
     public:
-        BigDataContainer();
+        BigDataContainer(const QString &path);
         ~BigDataContainer() { }
         void init();
         QStringList getStations() const;
@@ -18,6 +18,7 @@ class BigDataContainer
     private:
         QSqlDatabase dbCon;
         QVector<Station> stations;
+        QString mPath;
 
         BigDataContainer(const BigDataContainer &bdc) { }
         BigDataContainer & operator = (const BigDataContainer &bdc);

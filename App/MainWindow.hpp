@@ -20,14 +20,14 @@ class MainWindow : public QMainWindow
       Q_OBJECT
 
    public:
-      explicit MainWindow(QWidget *parent = nullptr);
+      explicit MainWindow(const QString &path, const QString &station, QWidget *parent = nullptr);
       ~MainWindow();
 
     private slots:
         void slotUpdateChart();
 
     private:
-        BigDataContainer bigData;
+        BigDataContainer *bigData = nullptr;
         QComboBox *stationsCombo = nullptr;
         QComboBox *daysCombo = nullptr;
         QComboBox *intervalCombo = nullptr;

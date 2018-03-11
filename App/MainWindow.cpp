@@ -7,13 +7,15 @@
 #include <QButtonGroup>
 #include <QLabel>
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(const QString &path, const QString &station, QWidget *parent)
    : QMainWindow(parent)
 {
-    bigData.init();
+    bigData = new BigDataContainer(path);
+    bigData->init();
 
     stationsCombo = new QComboBox();
-    stationsCombo->addItems(bigData.getStations());
+    stationsCombo->addItems(bigData->getStations());
+    stationsCombo->setCurrentIndex (stationsCombo->findText (QString("%1 - ").arg(station), Qt::MatchStartsWith));
     connect(stationsCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(slotUpdateChart()));
 
     auto stationLayout = new QHBoxLayout();
@@ -84,8 +86,8 @@ void MainWindow::slotUpdateChart()
 {
     auto stationId = stationsCombo->currentText().split(" - ").first();
     auto weekday = daysCombo->currentIndex() - 1;
-    auto bikesData = bikesCheck->isChecked() ? bigData.getDataByStation(stationId.toInt(), true, weekday, intervalCombo->currentData().toInt()) : QMap<QDateTime, int>();
-    auto slotsData = slotsCheck->isChecked() ? bigData.getDataByStation(stationId.toInt(), false, weekday, intervalCombo->currentData().toInt()) : QMap<QDateTime, int>();
+    auto bikesData = bikesCheck->isChecked() ? bigData->getDataByStation(stationId.toInt(), true, weekday, intervalCombo->currentData().toInt()) : QMap<QDateTime, int>();
+    auto slotsData = slotsCheck->isChecked() ? bigData->getDataByStation(stationId.toInt(), false, weekday, intervalCombo->currentData().toInt()) : QMap<QDateTime, int>();
     auto count = 0;
     QLineSeries *bikeSeries = nullptr;
     QLineSeries *slotsSeries = nullptr;
