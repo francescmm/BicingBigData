@@ -1,11 +1,22 @@
 #include "BicingService.hpp"
 #include <QThread>
+#include <QDebug>
 
 BicingService::BicingService(int argc, char **argv)
-   : QObject(), QtService<QCoreApplication>(argc, argv, "Bicing Daemon")
+   : QObject(), QtService<QCoreApplication>(argc, argv, "BicingBigData Daemon")
 {
    setServiceDescription("Deamon for retrieving data from Bicing");
    setServiceFlags(CanBeSuspended);
+
+   const auto pathIndex = argc == 3 ? 1 : 2;
+
+   if ((argc == 3 or argc == 4) and strcmp(argv[pathIndex], "-path") == 0)
+   {
+      mAbsolutePath = argv[pathIndex + 1];
+
+      if (!mAbsolutePath.endsWith ("/"))
+         mAbsolutePath.append ("/");
+   }
 }
 
 BicingService::~BicingService ()
@@ -15,15 +26,20 @@ BicingService::~BicingService ()
 
 void BicingService::start()
 {
-   mTimer = new QTimer ();
-   mTimer->setInterval (60000);
-   mTimer->setTimerType (Qt::PreciseTimer);
+   if (!mAbsolutePath.isEmpty ())
+   {
+      mTimer = new QTimer ();
+      mTimer->setInterval (60000);
+      mTimer->setTimerType (Qt::PreciseTimer);
 
-   connect (mTimer, SIGNAL (timeout ()), this, SLOT (slotCreateRequestor ()));
+      connect (mTimer, SIGNAL (timeout ()), this, SLOT (slotCreateRequestor ()));
 
-   slotCreateRequestor();
+      slotCreateRequestor();
 
-   mTimer->start ();
+      mTimer->start ();
+   }
+   else
+      qDebug() << "No path specified!";
 }
 
 void BicingService::pause()
@@ -36,7 +52,7 @@ void BicingService::resume ()
 
 void BicingService::slotCreateRequestor()
 {
-   auto requestor = new OpenDataRequestor();
+   auto requestor = new OpenDataRequestor(mAbsolutePath);
    auto thread = new QThread();
 
    requestor->moveToThread (thread);

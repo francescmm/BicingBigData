@@ -22,7 +22,7 @@
 #ifndef BICINGSERVICE_HPP
 #define BICINGSERVICE_HPP
 
-#include "OpenDataRequestor.h"
+#include "OpenDataRequestor.hpp"
 #include <QtService>
 #include <QTimer>
 #include <QDate>
@@ -49,6 +49,7 @@ class BicingService : public QObject, public QtService<QCoreApplication>
    private:
       OpenDataRequestor *requestor = nullptr;
       QTimer *mTimer = nullptr;
+      QString mAbsolutePath;
 
    private slots:
       void slotCreateRequestor();

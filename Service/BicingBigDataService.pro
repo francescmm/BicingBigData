@@ -1,4 +1,4 @@
-QT += core network
+QT += core network sql
 QT -= gui
 
 TARGET = BicingBigDataService
@@ -17,6 +17,9 @@ include(qtservice/qtservice.pri)
 HEADERS += \
     OpenDataRequestor.hpp \
     BicingService.hpp
+
+RESOURCES += \
+    appresources.qrc
 
 MOC_DIR = moc
 

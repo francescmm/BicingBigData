@@ -24,6 +24,7 @@
 
 #include <QObject>
 #include <QFile>
+#include <QSqlDatabase>
 
 class QNetworkReply;
 class QNetworkAccessManager;
@@ -36,7 +37,7 @@ class OpenDataRequestor : public QObject
       void signalTaskDone();
 
    public:
-      explicit OpenDataRequestor(QObject *parent = nullptr);
+      explicit OpenDataRequestor(const QString &absolutePath, QObject *parent = nullptr);
       ~OpenDataRequestor();
 
    public slots:
@@ -44,6 +45,8 @@ class OpenDataRequestor : public QObject
 
    private:
       QNetworkAccessManager *manager = nullptr;
+      static QSqlDatabase dbCon;
+      QString mAbsolutePath;
 
    private slots:
       void replyFinished(QNetworkReply *reply);
