@@ -6,6 +6,8 @@
 #include <QRadioButton>
 #include <QButtonGroup>
 #include <QLabel>
+#include <QDateTime>
+#include <QDateTimeAxis>
 
 MainWindow::MainWindow(const QString &path, const QString &station, QWidget *parent)
    : QMainWindow(parent)
@@ -86,7 +88,7 @@ void MainWindow::slotUpdateChart()
 {
     auto stationId = stationsCombo->currentText().split(" - ").first();
     auto weekday = daysCombo->currentIndex() - 1;
-    auto bikesData = bikesCheck->isChecked() ? bigData->getDataByStation(stationId.toInt(), true, weekday, intervalCombo->currentData().toInt()) : QMap<QDateTime, int>();
+    const auto bikesData = bikesCheck->isChecked() ? bigData->getDataByStation(stationId.toInt(), true, weekday, intervalCombo->currentData().toInt()) : QMap<QDateTime, int>();
     auto slotsData = slotsCheck->isChecked() ? bigData->getDataByStation(stationId.toInt(), false, weekday, intervalCombo->currentData().toInt()) : QMap<QDateTime, int>();
     auto count = 0;
     QLineSeries *bikeSeries = nullptr;
@@ -103,8 +105,8 @@ void MainWindow::slotUpdateChart()
         slotsSeries = new QLineSeries();
     }
 
-    for (auto iter = bikesData.constBegin(); iter != bikesData.constEnd(); ++iter)
-        *bikeSeries << QPointF(count++, iter.value());
+    for (auto iter = bikesData.constBegin (); iter != bikesData.constEnd (); ++iter)
+        bikeSeries->append (static_cast<qreal>(iter.key ().toMSecsSinceEpoch()), static_cast<qreal>(iter.value ()));
 
     count = 0;
 
@@ -172,22 +174,25 @@ void MainWindow::slotUpdateChart()
     }
     else
     {
-        auto dataByDay = bikeSeries->count() / 7;
-        axisX->append(tr("Monday"), dataByDay);
-        axisX->append(tr("Tuesday"), dataByDay * 2);
-        axisX->append(tr("Wednesday"), dataByDay * 3);
-        axisX->append(tr("Thursday"), dataByDay * 4);
-        axisX->append(tr("Friday"), dataByDay * 5);
-        axisX->append(tr("Saturday"), dataByDay * 6);
-        axisX->append(tr("Sunday"), dataByDay * 7);
+        QString oldVal;
+        auto count = 0;
+        auto xAxisCounter = 0;
+
+        for (auto iter = bikesData.constBegin (); iter != bikesData.constEnd (); ++iter, ++count)
+        {
+           if (oldVal != iter.key().date().toString("dddd"))
+           {
+              oldVal = iter.key().date().toString("dddd");
+              axisX->append(oldVal, count);
+              count = -1;
+              ++xAxisCounter;
+           }
+        }
     }
 
     axisX->setRange(0, bikeSeries->count());
 
     bikeSeries->attachAxis(axisX);
-
-    QValueAxis *axis2 = new QValueAxis;
-    axis2->setLabelFormat("");
 
     auto tickCount = 0;
 
@@ -214,8 +219,11 @@ void MainWindow::slotUpdateChart()
         }
     }
 
+    QDateTimeAxis *axis2 = new QDateTimeAxis ();
+    //axis2->setLabelFormat("");
     axis2->setTickCount(tickCount);
-    axis2->setRange(0, bikeSeries->count());
+    axis2->setFormat("hh");
+    //axis2->setRange(0, bikeSeries->count());
     chart->addAxis(axis2, Qt::AlignBottom);
     bikeSeries->attachAxis(axis2);
 

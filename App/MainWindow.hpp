@@ -2,6 +2,7 @@
 #define MAINWINDOW_HPP
 
 #include "BigDataContainer.hpp"
+#include <iostream>
 #include <QMainWindow>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMainWindow>
@@ -11,6 +12,8 @@
 #include <QtCharts/QCategoryAxis>
 
 QT_CHARTS_USE_NAMESPACE
+
+using namespace std;
 
 class QComboBox;
 class QCheckBox;
