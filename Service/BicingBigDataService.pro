@@ -12,7 +12,7 @@ SOURCES += main.cpp \
     OpenDataRequestor.cpp \
     BicingService.cpp
 
-include(qtservice/qtservice.pri)
+include(QtService/qtservice.pri)
 
 HEADERS += \
     OpenDataRequestor.hpp \

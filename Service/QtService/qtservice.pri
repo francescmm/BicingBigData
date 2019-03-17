@@ -1,4 +1,3 @@
-include(../common.pri)
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 !win32:QT += network
