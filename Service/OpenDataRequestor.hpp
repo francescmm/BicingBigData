@@ -25,31 +25,33 @@
 #include <QObject>
 #include <QFile>
 #include <QSqlDatabase>
+#include <QMutex>
 
 class QNetworkReply;
 class QNetworkAccessManager;
 
 class OpenDataRequestor : public QObject
 {
-      Q_OBJECT
+   Q_OBJECT
 
-   signals:
-      void signalTaskDone();
+signals:
+   void signalTaskDone();
 
-   public:
-      explicit OpenDataRequestor(const QString &absolutePath, QObject *parent = nullptr);
-      ~OpenDataRequestor();
+public:
+   explicit OpenDataRequestor(const QString &absolutePath, QObject *parent = nullptr);
+   ~OpenDataRequestor() override = default;
 
-   public slots:
-      void makeRequest();
+   void makeRequest();
 
-   private:
-      QNetworkAccessManager *manager = nullptr;
-      static QSqlDatabase dbCon;
-      QString mAbsolutePath;
+private:
+   QNetworkAccessManager *manager = nullptr;
+   QSqlDatabase dbCon;
+   static QMutex mutex;
+   QString mAbsolutePath;
 
-   private slots:
-      void replyFinished(QNetworkReply *reply);
+   void setupDatabase();
+   void createSchema();
+   void replyFinished(QNetworkReply *reply);
 };
 
 #endif // OPENDATAREQUESTOR_H

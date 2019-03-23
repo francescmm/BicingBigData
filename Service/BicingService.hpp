@@ -34,25 +34,25 @@ class BicingService : public QObject, public QtService<QCoreApplication>
 {
    Q_OBJECT
 
-   signals:
-      void signalLunchRequestor();
+signals:
+   void signalLunchRequestor();
 
-   public:
-      explicit BicingService(int argc, char **argv);
-      ~BicingService ();
+public:
+   explicit BicingService(int argc, char **argv);
+   ~BicingService() override = default;
 
-   protected:
-      void start() override;
-      void pause() override;
-      void resume () override;
+protected:
+   void start() override;
+   void pause() override;
+   void resume() override;
 
-   private:
-      OpenDataRequestor *requestor = nullptr;
-      QTimer *mTimer = nullptr;
-      QString mAbsolutePath;
+private:
+   OpenDataRequestor *requestor = nullptr;
+   QTimer *mTimer = nullptr;
+   QString mAbsolutePath;
 
-   private slots:
-      void slotCreateRequestor();
+private slots:
+   void slotCreateRequestor();
 };
 
 #endif // BICINGSERVICE_HPP
