@@ -19,6 +19,10 @@ OpenDataRequestor::OpenDataRequestor(const QString &absolutePath, QObject *paren
 
 void OpenDataRequestor::makeRequest()
 {
+   setupDatabase();
+
+   createSchema();
+
    manager = new QNetworkAccessManager(this);
 
    connect(manager, &QNetworkAccessManager::finished, this, &OpenDataRequestor::replyFinished, Qt::QueuedConnection);
