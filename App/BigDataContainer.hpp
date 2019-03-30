@@ -10,19 +10,21 @@ class BigDataContainer
 {
 public:
    BigDataContainer(const QString &path);
-   ~BigDataContainer() {}
+   ~BigDataContainer() = default;
    void init();
    QStringList getStations() const;
-   QMap<QDateTime, int> getDataByStationCurrentDay(int id, bool bikes = true) const;
-   QMap<QDateTime, int> getDataByStation(int id, bool bikes = true, int weekday = -1, int interval = 60) const;
+   QMap<QDateTime, int> getDataByStationCurrentDay(int id, bool bikes = true, const QDate &date = QDate::currentDate(), int interval = 60);
+   QMap<QDateTime, int> getDataByStation(int id, bool bikes = true, int weekday = -1, int interval = 60);
 
 private:
    QSqlDatabase dbCon;
    QVector<Station> stations;
    QString mPath;
 
-   BigDataContainer(const BigDataContainer &bdc) {}
+   BigDataContainer(const BigDataContainer &bdc) = default;
    BigDataContainer &operator=(const BigDataContainer &bdc);
+
+   void fillGapsAtBeginnig(const QDateTime lastRegisterTime, int interval, QMap<QDateTime, int> &map);
 };
 
 #endif // BIGDATACONTAINER_H

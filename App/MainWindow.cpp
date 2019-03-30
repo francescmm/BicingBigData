@@ -15,6 +15,8 @@
 MainWindow::MainWindow(const QString &path, const QString &station, QWidget *parent)
    : QMainWindow(parent)
 {
+   labelsFont.setPixelSize(12);
+
    bigData = new BigDataContainer(path);
    bigData->init();
 
@@ -40,7 +42,7 @@ MainWindow::MainWindow(const QString &path, const QString &station, QWidget *par
    rbDay->setChecked(true);
    dateLayout->addWidget(rbDay, 0, 0);
 
-   const auto dateWidget = new QDateEdit(QDate::currentDate());
+   dateWidget = new QDateEdit(QDate::currentDate());
    dateWidget->setCalendarPopup(true);
    dateLayout->addWidget(dateWidget, 0, 1);
 
@@ -99,6 +101,7 @@ MainWindow::MainWindow(const QString &path, const QString &station, QWidget *par
 
    /* Connects */
    connect(stationsCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::slotUpdateChartByDay);
+   connect(dateWidget, &QDateEdit::dateChanged, this, &MainWindow::slotUpdateChartByDate);
    connect(rbDay, &QRadioButton::toggled, dateWidget, &QDateEdit::setEnabled);
    connect(rbDay, &QRadioButton::toggled, this, &MainWindow::slotUpdateChartByDay);
    connect(rbDate, &QRadioButton::toggled, daysCombo, &QDateEdit::setEnabled);
@@ -108,6 +111,8 @@ MainWindow::MainWindow(const QString &path, const QString &station, QWidget *par
    connect(softLineCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChartByDay);
    connect(bikesCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChartByDay);
    connect(slotsCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChartByDay);
+
+   setMinimumSize(800, 600);
 }
 
 void MainWindow::createChart()
@@ -127,25 +132,8 @@ void MainWindow::createChart()
    chartView = new QChartView(chart);
    chartView->setRenderHint(QPainter::Antialiasing);
 
-   QFont labelsFont;
-   labelsFont.setPixelSize(12);
-
-   QPen axisPen(QRgb(0xd18952));
-   axisPen.setWidth(1);
-
-   QCategoryAxis *axisY = new QCategoryAxis();
-   axisY->setLabelsFont(labelsFont);
-   axisY->setLinePen(axisPen);
-   axisY->setLabelsBrush(QBrush(Qt::black));
-   axisY->setGridLineVisible(false);
-   axisY->setShadesPen(Qt::NoPen);
-   axisY->setShadesBrush(QBrush(QColor(0x99, 0xcc, 0xcc, 0x55)));
-   axisY->setShadesVisible(true);
-   axisY->append("Low", 5);
-   axisY->append("Optimal", 15);
-   axisY->append("Perfect", 30);
-   axisY->setRange(0, 30);
-   chart->addAxis(axisY, Qt::AlignLeft);
+   createAxisY();
+   createAxisTimeInDay();
 }
 
 void MainWindow::createAndCustomizeSeries()
@@ -165,56 +153,52 @@ void MainWindow::createAndCustomizeSeries()
    }
 
    auto penWidth = intervalCombo->currentData().toInt() >= 30 ? 3 : intervalCombo->currentData().toInt() >= 10 ? 2 : 1;
-   QPen pen(QRgb(0xfdb157));
-   pen.setWidth(penWidth);
+
+   QPen pen(QBrush(0xfdb157), penWidth);
    bikeSeries->setPen(pen);
 
    pen.setColor("blue");
    slotsSeries->setPen(pen);
 }
 
-void MainWindow::slotUpdateChartByDay()
+void MainWindow::createAxisY()
 {
-   createAndCustomizeSeries();
+   delete axisY;
+   axisY = new QCategoryAxis();
+   axisY->setLabelsFont(labelsFont);
+   axisY->setLinePen(xAxisPen);
+   axisY->setLabelsBrush(QBrush(Qt::black));
+   axisY->setGridLineVisible(false);
+   axisY->setShadesPen(Qt::NoPen);
+   axisY->setShadesBrush(QBrush(QColor(0x99, 0xcc, 0xcc, 0x55)));
+   axisY->setShadesVisible(true);
+   axisY->append("Low", 5);
+   axisY->append("Optimal", 15);
+   axisY->append("Perfect", 30);
+   axisY->setRange(0, 30);
+   chart->addAxis(axisY, Qt::AlignLeft);
+}
 
-   const auto stationId = stationsCombo->currentText().split(" - ").first();
+void MainWindow::createAxisTimeInDay()
+{
+   delete axisX;
+   axisX = new QCategoryAxis();
+   axisX->setLabelsFont(labelsFont);
+   axisX->setLinePen(xAxisPen);
+   axisX->setLabelsBrush(QBrush(Qt::black));
+   axisX->setGridLineVisible(false);
+   axisX->setShadesPen(Qt::NoPen);
+   axisX->append("Night (0-6)", 6 * 60 / intervalCombo->currentData().toInt());
+   axisX->append("Morning (6-12)", 12 * 60 / intervalCombo->currentData().toInt());
+   axisX->append("Afternoon (12-19)", 19 * 60 / intervalCombo->currentData().toInt());
+   axisX->append("Evening (19-24)", 24 * 60 / intervalCombo->currentData().toInt());
+   axisX->setRange(0, 24 * 60 / intervalCombo->currentData().toInt());
+   chart->addAxis(axisX, Qt::AlignTop);
+}
 
-   chart->setTitle(QString("Availability for station %2 (%1)").arg(stationId).arg(stationsCombo->currentText().split(" - ").last()));
-
+void MainWindow::createAxisTiming()
+{
    const auto weekday = daysCombo->currentIndex() - 1;
-
-   auto count = 0;
-
-   const auto bikesData = bikesCheck->isChecked()
-       ? daysCombo->currentText() == tr("Today")
-           ? bigData->getDataByStationCurrentDay(stationId.toInt(), true)
-           : bigData->getDataByStation(stationId.toInt(), true, weekday, intervalCombo->currentData().toInt())
-       : QMap<QDateTime, int>();
-
-   for (auto iter = bikesData.constBegin(); iter != bikesData.constEnd(); ++iter)
-   {
-      *bikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
-   }
-
-   const auto slotsData = slotsCheck->isChecked()
-       ? daysCombo->currentText() == tr("Today")
-           ? bigData->getDataByStationCurrentDay(stationId.toInt(), false)
-           : bigData->getDataByStation(stationId.toInt(), false, weekday, intervalCombo->currentData().toInt())
-       : QMap<QDateTime, int>();
-
-   count = 0;
-
-   for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
-      *slotsSeries << QPointF(count++, iter.value());
-
-   // Customize axis label font
-   QFont labelsFont;
-   labelsFont.setPixelSize(12);
-
-   // Customize axis colors
-   QPen axisPen(QRgb(0xd18952));
-   axisPen.setWidth(1);
-
    auto tickCount = 0;
 
    if (weekday == -1)
@@ -242,42 +226,88 @@ void MainWindow::slotUpdateChartByDay()
    }
 
    delete axis2;
-
-   labelsFont.setPixelSize(12);
-
-   axisPen = QPen(QRgb(0xd18952));
-   axisPen.setWidth(1);
-
    axis2 = new QDateTimeAxis();
    axis2->setLabelsFont(labelsFont);
-   axis2->setLinePen(axisPen);
+   axis2->setLinePen(xAxisPen);
    axis2->setLabelsBrush(QBrush(Qt::black));
    axis2->setGridLineVisible(false);
    axis2->setShadesPen(Qt::NoPen);
    axis2->setFormat("hh");
    axis2->setTickCount(tickCount);
    chart->addAxis(axis2, Qt::AlignBottom);
+}
 
-   delete axisX;
-   axisX = new QCategoryAxis();
-   axisX->setLabelsFont(labelsFont);
-   axisX->setLinePen(axisPen);
-   axisX->setLabelsBrush(QBrush(Qt::black));
-   axisX->setGridLineVisible(false);
-   axisX->setShadesPen(Qt::NoPen);
-   axisX->append("Night (0-6)", 6 * 60 / intervalCombo->currentData().toInt());
-   axisX->append("Morning (6-12)", 12 * 60 / intervalCombo->currentData().toInt());
-   axisX->append("Afternoon (12-19)", 19 * 60 / intervalCombo->currentData().toInt());
-   axisX->append("Evening (19-24)", 24 * 60 / intervalCombo->currentData().toInt());
-   axisX->setRange(0, 24 * 60 / intervalCombo->currentData().toInt());
-   chart->addAxis(axisX, Qt::AlignTop);
+void MainWindow::updateChartGeneralInfo()
+{
+   createAndCustomizeSeries();
+
+   const auto stationId = stationsCombo->currentText().split(" - ").first();
+
+   chart->setTitle(QString("Availability for station %2 (%1)").arg(stationId).arg(stationsCombo->currentText().split(" - ").last()));
+}
+
+void MainWindow::slotUpdateChartByDay()
+{
+   updateChartGeneralInfo();
+
+   const auto stationId = stationsCombo->currentText().split(" - ").first();
+   const auto weekday = daysCombo->currentIndex() - 1;
+
+   const auto bikesData = bikesCheck->isChecked()
+       ? bigData->getDataByStation(stationId.toInt(), true, weekday, intervalCombo->currentData().toInt())
+       : QMap<QDateTime, int>();
+
+   for (auto iter = bikesData.constBegin(); iter != bikesData.constEnd(); ++iter)
+      *bikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
+
+   const auto slotsData = slotsCheck->isChecked()
+       ? bigData->getDataByStation(stationId.toInt(), false, weekday, intervalCombo->currentData().toInt())
+       : QMap<QDateTime, int>();
+
+   for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
+      *slotsSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), iter.value());
+
+   updateChartAxis();
+}
+
+void MainWindow::slotUpdateChartByDate()
+{
+   updateChartGeneralInfo();
+
+   const auto stationId = stationsCombo->currentText().split(" - ").first();
+
+   const auto bikesData = bikesCheck->isChecked()
+       ? bigData->getDataByStationCurrentDay(stationId.toInt(), true, qobject_cast<QDateEdit *>(sender())->date())
+       : QMap<QDateTime, int>();
+
+   for (auto iter = bikesData.constBegin(); iter != bikesData.constEnd(); ++iter)
+      *bikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
+
+   const auto slotsData = slotsCheck->isChecked()
+       ? bigData->getDataByStationCurrentDay(stationId.toInt(), false)
+       : QMap<QDateTime, int>();
+
+   for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
+      *slotsSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), iter.value());
+
+   updateChartAxis();
+}
+
+void MainWindow::updateChartAxis()
+{
+   createAxisTiming();
 
    if (bikesCheck->isChecked())
+   {
       chart->addSeries(bikeSeries);
+      bikeSeries->attachAxis(axis2);
+      bikeSeries->attachAxis(axisY);
+   }
 
    if (slotsCheck->isCheckable())
+   {
       chart->addSeries(slotsSeries);
-
-   bikeSeries->attachAxis(axis2);
-   //chart->createDefaultAxes();
+      slotsSeries->attachAxis(axis2);
+      slotsSeries->attachAxis(axisY);
+   }
 }

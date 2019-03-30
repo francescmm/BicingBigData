@@ -17,6 +17,7 @@ using namespace std;
 
 class QComboBox;
 class QCheckBox;
+class QDateEdit;
 
 namespace QT_CHARTS_NAMESPACE
 {
@@ -39,6 +40,7 @@ private:
    QComboBox *stationsCombo = nullptr;
    QComboBox *daysCombo = nullptr;
    QComboBox *intervalCombo = nullptr;
+   QDateEdit *dateWidget = nullptr;
    QCheckBox *softLineCheck = nullptr;
    QCheckBox *bikesCheck = nullptr;
    QCheckBox *slotsCheck = nullptr;
@@ -49,10 +51,18 @@ private:
    QLineSeries *slotsSeries = nullptr;
    QCategoryAxis *axisX = nullptr;
    QDateTimeAxis *axis2 = nullptr;
+   QCategoryAxis *axisY = nullptr;
+   QFont labelsFont;
+   QPen xAxisPen = QPen(QBrush(0xd18952), 1);
 
    void createChart();
    void createAndCustomizeSeries();
    void addValuesToSeries();
+   void createAxisY();
+   void createAxisTimeInDay();
+   void createAxisTiming();
+   void updateChartGeneralInfo();
+   void updateChartAxis();
 };
 
 #endif // MAINWINDOW_HPP

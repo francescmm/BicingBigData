@@ -2,6 +2,8 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+#include <cmath>
+
 BigDataContainer::BigDataContainer(const QString &path)
    : mPath(path)
 {
@@ -66,7 +68,7 @@ QStringList BigDataContainer::getStations() const
    return list;
 }
 
-QMap<QDateTime, int> BigDataContainer::getDataByStationCurrentDay(int id, bool bikes) const
+QMap<QDateTime, int> BigDataContainer::getDataByStationCurrentDay(int id, bool bikes, const QDate &date, int interval)
 {
    QMap<QDateTime, int> map;
 
@@ -74,50 +76,82 @@ QMap<QDateTime, int> BigDataContainer::getDataByStationCurrentDay(int id, bool b
    {
       auto sql = QString("SELECT updateDT, ROUND(AVG(%1)) "
                          "FROM station_status "
-                         "WHERE id_station = %2 AND strftime('%w', updateDT) = '%3'")
+                         "WHERE id_station = %2 "
+                         "AND date(updateDT) = date('%3')"
+                         " GROUP BY strftime('%d', updateDT)"
+                         ", strftime('%H', updateDT)"
+                         ", 4 * strftime('%H', updateDT) + cast(strftime('%M', updateDT) / %4 as int) "
+                         "ORDER BY strftime('%s', updateDT), updateDT")
                      .arg(bikes ? "bikes" : "slots")
                      .arg(id)
-                     .arg(6 /*QDate::currentDate().dayOfWeek()*/);
+                     .arg(date.toString("yyyy-MM-dd"))
+                     .arg(interval);
 
-      sql += QString(" GROUP BY strftime('%d', updateDT)"
-                     ", strftime('%H', updateDT)"
-                     ", 4 * strftime('%H', updateDT) + cast(strftime('%M', updateDT) / %1 as int) "
-                     "ORDER BY strftime('%s', updateDT), updateDT")
-                 .arg(60);
-
+      QDateTime lastRegisterTime;
       QSqlQuery query;
 
       if (query.exec(sql))
       {
          while (query.next())
-            map.insert(query.value(0).toDateTime(), query.value(1).toInt());
+         {
+            lastRegisterTime = query.value(0).toDateTime();
+
+            if (map.empty())
+               fillGapsAtBeginnig(lastRegisterTime, interval, map);
+
+            map.insert(lastRegisterTime, query.value(1).toInt());
+         }
       }
    }
 
    return map;
 }
 
-QMap<QDateTime, int> BigDataContainer::getDataByStation(int id, bool bikes, int weekday, int interval) const
+QMap<QDateTime, int> BigDataContainer::getDataByStation(int id, bool bikes, int weekday, int interval)
 {
    QMap<QDateTime, int> map;
 
    if (dbCon.isOpen())
    {
-      auto sql = QString("SELECT updateDT, ROUND(AVG(%1)) FROM station_status WHERE id_station = %2").arg(bikes ? "bikes" : "slots").arg(id);
+      auto sql = QString("SELECT updateDT, ROUND(AVG(%1)) "
+                         "FROM station_status "
+                         "WHERE id_station = %2"
+                         " AND strftime('%w', updateDT) = '%3'"
+                         " GROUP BY strftime('%d', updateDT), strftime('%H', updateDT)"
+                         ", 4 * strftime('%H', updateDT) + cast(strftime('%M', updateDT) / %4 as int) "
+                         "ORDER BY strftime('%s', updateDT), updateDT")
+                     .arg(bikes ? "bikes" : "slots")
+                     .arg(id)
+                     .arg(weekday)
+                     .arg(interval);
 
-      if (weekday >= 0 && weekday <= 6)
-         sql += QString(" AND strftime('%w', updateDT) = %1").arg(weekday);
-
-      sql += QString(" GROUP BY strftime('%d', updateDT), strftime('%H', updateDT), 4 * strftime('%H', updateDT) + cast(strftime('%M', updateDT) / %1 as int) ORDER BY strftime('%s', updateDT), updateDT").arg(interval);
-
+      QDateTime lastRegisterTime;
       QSqlQuery query;
 
       if (query.exec(sql))
       {
          while (query.next())
-            map.insert(query.value(0).toDateTime(), query.value(1).toInt());
+         {
+            lastRegisterTime = query.value(0).toDateTime();
+
+            if (map.empty())
+               fillGapsAtBeginnig(lastRegisterTime, interval, map);
+
+            map.insert(lastRegisterTime, query.value(1).toInt());
+         }
       }
    }
 
    return map;
+}
+
+void BigDataContainer::fillGapsAtBeginnig(const QDateTime lastRegisterTime, int interval, QMap<QDateTime, int> &map)
+{
+   const auto hourFirstRegister = QTime(lastRegisterTime.time().hour(), 0, 0);
+
+   for (auto hour = QTime(0, 0, 0); hour < hourFirstRegister; hour = hour.addSecs(60 * interval))
+   {
+      const auto emptyRegister = QDateTime(lastRegisterTime.date(), hour);
+      map.insert(emptyRegister, 0);
+   }
 }
