@@ -68,7 +68,7 @@ QStringList BigDataContainer::getStations() const
    return list;
 }
 
-QMap<QDateTime, int> BigDataContainer::getDataByStationCurrentDay(int id, bool bikes, const QDate &date, int interval)
+QMap<QDateTime, int> BigDataContainer::getDataByStationByDate(int id, bool bikes, const QDate &date, int interval)
 {
    QMap<QDateTime, int> map;
 

@@ -38,16 +38,16 @@ MainWindow::MainWindow(const QString &path, const QString &station, QWidget *par
    const auto dateGroupBox = new QGroupBox();
    const auto dateLayout = new QGridLayout(dateGroupBox);
 
-   const auto rbDay = new QRadioButton(tr("Select a day"));
-   rbDay->setChecked(true);
-   dateLayout->addWidget(rbDay, 0, 0);
+   rbDate = new QRadioButton(tr("Select a day"));
+   rbDate->setChecked(true);
+   dateLayout->addWidget(rbDate, 0, 0);
 
    dateWidget = new QDateEdit(QDate::currentDate());
    dateWidget->setCalendarPopup(true);
    dateLayout->addWidget(dateWidget, 0, 1);
 
-   const auto rbDate = new QRadioButton(tr("Show average per day:"));
-   dateLayout->addWidget(rbDate, 1, 0);
+   rbWeekday = new QRadioButton(tr("Show average per day:"));
+   dateLayout->addWidget(rbWeekday, 1, 0);
 
    daysCombo = new QComboBox();
    daysCombo->addItems({ tr("All"), tr("Monday"), tr("Tuesday"), tr("Wednesday"), tr("Thursday"), tr("Friday"), tr("Saturday"), tr("Sunday"), tr("Today") });
@@ -100,17 +100,17 @@ MainWindow::MainWindow(const QString &path, const QString &station, QWidget *par
    setCentralWidget(mainFrame);
 
    /* Connects */
-   connect(stationsCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::slotUpdateChartByDay);
+   connect(stationsCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::slotUpdateChart);
    connect(dateWidget, &QDateEdit::dateChanged, this, &MainWindow::slotUpdateChartByDate);
-   connect(rbDay, &QRadioButton::toggled, dateWidget, &QDateEdit::setEnabled);
-   connect(rbDay, &QRadioButton::toggled, this, &MainWindow::slotUpdateChartByDay);
-   connect(rbDate, &QRadioButton::toggled, daysCombo, &QDateEdit::setEnabled);
-   connect(rbDate, &QRadioButton::toggled, this, &MainWindow::slotUpdateChartByDay);
-   connect(daysCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::slotUpdateChartByDay);
-   connect(intervalCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::slotUpdateChartByDay);
-   connect(softLineCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChartByDay);
-   connect(bikesCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChartByDay);
-   connect(slotsCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChartByDay);
+   connect(rbDate, &QRadioButton::toggled, dateWidget, &QDateEdit::setEnabled);
+   connect(rbDate, &QRadioButton::toggled, this, &MainWindow::slotUpdateChartByDate);
+   connect(rbWeekday, &QRadioButton::toggled, daysCombo, &QDateEdit::setEnabled);
+   connect(rbWeekday, &QRadioButton::toggled, this, &MainWindow::slotUpdateChartByWeekday);
+   connect(daysCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::slotUpdateChart);
+   connect(intervalCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::slotUpdateChart);
+   connect(softLineCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChart);
+   connect(bikesCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChart);
+   connect(slotsCheck, &QCheckBox::stateChanged, this, &MainWindow::slotUpdateChart);
 
    setMinimumSize(800, 600);
 }
@@ -201,7 +201,7 @@ void MainWindow::createAxisTiming()
    const auto weekday = daysCombo->currentIndex() - 1;
    auto tickCount = 0;
 
-   if (weekday == -1)
+   if (weekday == -1 && rbWeekday->isChecked())
       tickCount = 7 * 24 / 4;
    else
    {
@@ -246,7 +246,7 @@ void MainWindow::updateChartGeneralInfo()
    chart->setTitle(QString("Availability for station %2 (%1)").arg(stationId).arg(stationsCombo->currentText().split(" - ").last()));
 }
 
-void MainWindow::slotUpdateChartByDay()
+void MainWindow::slotUpdateChartByWeekday()
 {
    updateChartGeneralInfo();
 
@@ -277,14 +277,14 @@ void MainWindow::slotUpdateChartByDate()
    const auto stationId = stationsCombo->currentText().split(" - ").first();
 
    const auto bikesData = bikesCheck->isChecked()
-       ? bigData->getDataByStationCurrentDay(stationId.toInt(), true, qobject_cast<QDateEdit *>(sender())->date())
+       ? bigData->getDataByStationByDate(stationId.toInt(), true, dateWidget->date())
        : QMap<QDateTime, int>();
 
    for (auto iter = bikesData.constBegin(); iter != bikesData.constEnd(); ++iter)
       *bikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
 
    const auto slotsData = slotsCheck->isChecked()
-       ? bigData->getDataByStationCurrentDay(stationId.toInt(), false)
+       ? bigData->getDataByStationByDate(stationId.toInt(), false, dateWidget->date())
        : QMap<QDateTime, int>();
 
    for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
@@ -310,4 +310,12 @@ void MainWindow::updateChartAxis()
       slotsSeries->attachAxis(axis2);
       slotsSeries->attachAxis(axisY);
    }
+}
+
+void MainWindow::slotUpdateChart()
+{
+   if (rbWeekday->isChecked())
+      slotUpdateChartByWeekday();
+   else
+      slotUpdateChartByDate();
 }

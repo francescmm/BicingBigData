@@ -13,7 +13,7 @@ public:
    ~BigDataContainer() = default;
    void init();
    QStringList getStations() const;
-   QMap<QDateTime, int> getDataByStationCurrentDay(int id, bool bikes = true, const QDate &date = QDate::currentDate(), int interval = 60);
+   QMap<QDateTime, int> getDataByStationByDate(int id, bool bikes = true, const QDate &date = QDate::currentDate(), int interval = 60);
    QMap<QDateTime, int> getDataByStation(int id, bool bikes = true, int weekday = -1, int interval = 60);
 
 private:

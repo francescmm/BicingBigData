@@ -18,6 +18,7 @@ using namespace std;
 class QComboBox;
 class QCheckBox;
 class QDateEdit;
+class QRadioButton;
 
 namespace QT_CHARTS_NAMESPACE
 {
@@ -32,11 +33,10 @@ public:
    explicit MainWindow(const QString &path, const QString &station, QWidget *parent = nullptr);
    ~MainWindow() override = default;
 
-   void slotUpdateChartByDay();
-   void slotUpdateChartByDate();
-
 private:
    BigDataContainer *bigData = nullptr;
+   QRadioButton *rbDate = nullptr;
+   QRadioButton *rbWeekday = nullptr;
    QComboBox *stationsCombo = nullptr;
    QComboBox *daysCombo = nullptr;
    QComboBox *intervalCombo = nullptr;
@@ -63,6 +63,10 @@ private:
    void createAxisTiming();
    void updateChartGeneralInfo();
    void updateChartAxis();
+
+   void slotUpdateChart();
+   void slotUpdateChartByWeekday();
+   void slotUpdateChartByDate();
 };
 
 #endif // MAINWINDOW_HPP
