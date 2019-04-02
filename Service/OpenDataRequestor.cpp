@@ -41,28 +41,31 @@ void OpenDataRequestor::setupDatabase()
 void OpenDataRequestor::createSchema()
 {
     QDir dir(mAbsolutePath);
+    QFileInfo file(mAbsolutePath + "testing.db");
 
     if (!dir.exists("data")) {
         qDebug() << "Creating directory...";
         dir.mkdir(QString("%1data").arg(mAbsolutePath));
-
-        if (dbCon.open()) {
-            QFile dbFile(":/db_structure");
-
-            if (dbFile.open(QIODevice::ReadOnly)) {
-                auto dbFileContent = dbFile.readAll();
-                auto statements = dbFileContent.split(';');
-
-                for (const auto& s : statements) {
-                    QSqlQuery query;
-                    query.exec(s);
-                }
-
-                dbCon.close();
-                dbFile.close();
-            }
-        }
         qDebug() << "Done!";
+    }
+
+    if (((dir.exists("testing.db") and file.size() > 0) or !dir.exists("testing.db")) and dbCon.open()) {
+        QFile dbFile(":/db_structure");
+
+        if (dbFile.open(QIODevice::ReadOnly)) {
+            auto dbFileContent = dbFile.readAll();
+            dbFileContent = dbFileContent.replace('\n', "");
+            auto statements = dbFileContent.split(';');
+
+            for (const auto& s : statements) {
+                QSqlQuery query;
+                if (!s.isEmpty() && !query.exec(s))
+                    qDebug() << query.lastError().text();
+            }
+
+            dbCon.close();
+            dbFile.close();
+        }
     }
 }
 
