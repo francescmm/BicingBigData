@@ -22,36 +22,36 @@
 #ifndef OPENDATAREQUESTOR_H
 #define OPENDATAREQUESTOR_H
 
-#include <QObject>
 #include <QFile>
-#include <QSqlDatabase>
 #include <QMutex>
+#include <QObject>
+#include <QSqlDatabase>
 
 class QNetworkReply;
 class QNetworkAccessManager;
 
-class OpenDataRequestor : public QObject
-{
-   Q_OBJECT
+class OpenDataRequestor : public QObject {
+    Q_OBJECT
 
 signals:
-   void signalTaskDone();
+    void signalTaskDone();
 
 public:
-   explicit OpenDataRequestor(const QString &absolutePath, QObject *parent = nullptr);
-   ~OpenDataRequestor() override = default;
+    explicit OpenDataRequestor(const QString& absolutePath, QObject* parent = nullptr);
+    ~OpenDataRequestor() override = default;
 
-   void makeRequest();
+    void makeRequest();
+    void closeDatabase();
 
 private:
-   QNetworkAccessManager *manager = nullptr;
-   QSqlDatabase dbCon;
-   static QMutex mutex;
-   QString mAbsolutePath;
+    QNetworkAccessManager* manager = nullptr;
+    QSqlDatabase dbCon;
+    static QMutex mutex;
+    QString mAbsolutePath;
 
-   void setupDatabase();
-   void createSchema();
-   void replyFinished(QNetworkReply *reply);
+    void setupDatabase();
+    void createSchema();
+    void replyFinished(QNetworkReply* reply);
 };
 
 #endif // OPENDATAREQUESTOR_H
