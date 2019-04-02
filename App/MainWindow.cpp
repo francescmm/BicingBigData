@@ -253,23 +253,24 @@ void MainWindow::slotUpdateChartByWeekday()
 
     const auto stationId = stationsCombo->currentText().split(" - ").first();
     const auto weekday = daysCombo->currentIndex() - 1;
+    const auto interval = intervalCombo->currentData().toInt();
 
     const auto bikesData = bikesCheck->isChecked()
-        ? bigData->getDataByStation(stationId.toInt(), Data::MECHANICAL, weekday, intervalCombo->currentData().toInt())
+        ? bigData->getDataByStation(stationId.toInt(), Data::MECHANICAL, weekday, interval)
         : QMap<QDateTime, int>();
 
     for (auto iter = bikesData.constBegin(); iter != bikesData.constEnd(); ++iter)
         *bikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
 
     const auto ebikesData = bikesCheck->isChecked()
-        ? bigData->getDataByStationByDate(stationId.toInt(), Data::EBIKE, dateWidget->date())
+        ? bigData->getDataByStation(stationId.toInt(), Data::EBIKE, weekday, interval)
         : QMap<QDateTime, int>();
 
     for (auto iter = ebikesData.constBegin(); iter != ebikesData.constEnd(); ++iter)
         *ebikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
 
     const auto slotsData = slotsCheck->isChecked()
-        ? bigData->getDataByStation(stationId.toInt(), Data::SLOT, weekday, intervalCombo->currentData().toInt())
+        ? bigData->getDataByStation(stationId.toInt(), Data::SLOT, weekday, interval)
         : QMap<QDateTime, int>();
 
     for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
@@ -283,23 +284,24 @@ void MainWindow::slotUpdateChartByDate()
     updateChartGeneralInfo();
 
     const auto stationId = stationsCombo->currentText().split(" - ").first();
+    const auto interval = intervalCombo->currentData().toInt();
 
     const auto bikesData = bikesCheck->isChecked()
-        ? bigData->getDataByStationByDate(stationId.toInt(), Data::MECHANICAL, dateWidget->date())
+        ? bigData->getDataByStationByDate(stationId.toInt(), Data::MECHANICAL, dateWidget->date(), interval)
         : QMap<QDateTime, int>();
 
     for (auto iter = bikesData.constBegin(); iter != bikesData.constEnd(); ++iter)
         *bikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
 
     const auto ebikesData = bikesCheck->isChecked()
-        ? bigData->getDataByStationByDate(stationId.toInt(), Data::EBIKE, dateWidget->date())
+        ? bigData->getDataByStationByDate(stationId.toInt(), Data::EBIKE, dateWidget->date(), interval)
         : QMap<QDateTime, int>();
 
     for (auto iter = ebikesData.constBegin(); iter != ebikesData.constEnd(); ++iter)
         *ebikeSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), static_cast<qreal>(iter.value()));
 
     const auto slotsData = slotsCheck->isChecked()
-        ? bigData->getDataByStationByDate(stationId.toInt(), Data::SLOT, dateWidget->date())
+        ? bigData->getDataByStationByDate(stationId.toInt(), Data::SLOT, dateWidget->date(), interval)
         : QMap<QDateTime, int>();
 
     for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
