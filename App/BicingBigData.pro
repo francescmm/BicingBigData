@@ -26,15 +26,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         MainWindow.cpp \
-    Station.cpp \
-    StationStatus.cpp \
-    BigDataContainer.cpp
+    BigDataContainer.cpp \
+    ChartWidget.cpp
 
 HEADERS += \
         MainWindow.hpp \
     Station.hpp \
-    StationStatus.hpp \
-    BigDataContainer.hpp
+    BigDataContainer.hpp \
+    ChartWidget.h
 
 RESOURCES += \
     appresources.qrc
