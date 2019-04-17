@@ -70,6 +70,16 @@ QStringList BigDataContainer::getStations() const
    return list;
 }
 
+Station BigDataContainer::getStation(const int stationId) const
+{
+   auto station = std::find_if(stations.begin(), stations.end(), [stationId](const Station &s) { return s.id == stationId; });
+
+   if (station != stations.end())
+      return *station;
+
+   return Station();
+}
+
 QMap<QDateTime, int> BigDataContainer::getDataByStationByDate(int id, Data bikes, const QDate &date, int interval)
 {
    QMap<QDateTime, int> map;

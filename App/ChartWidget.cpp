@@ -27,7 +27,7 @@ void ChartWidget::initialize(const int interval)
    createAxisTimeInDay(interval);
 }
 
-void ChartWidget::createAxisY()
+void ChartWidget::createAxisY(const int maxValue)
 {
    delete axisY;
    axisY = new QCategoryAxis();
@@ -38,10 +38,10 @@ void ChartWidget::createAxisY()
    axisY->setShadesPen(Qt::NoPen);
    axisY->setShadesBrush(QBrush(QColor(0x99, 0xcc, 0xcc, 0x55)));
    axisY->setShadesVisible(true);
-   axisY->append("Low", 5);
-   axisY->append("Optimal", 15);
-   axisY->append("Perfect", 30);
-   axisY->setRange(0, 30);
+   axisY->append("Low", maxValue * 0.1);
+   axisY->append("Optimal", maxValue * 0.5);
+   axisY->append("Perfect", maxValue);
+   axisY->setRange(0, maxValue + 3);
    chart->addAxis(axisY, Qt::AlignLeft);
 }
 
@@ -68,6 +68,8 @@ void ChartWidget::updateChartByDate(const int stationId, const QString &stationN
 
    createAndCustomizeSeries(interval);
 
+   bigData->getStations();
+
    const auto bikesData = showBikes
        ? bigData->getDataByStationByDate(stationId, Data::MECHANICAL, date, interval)
        : QMap<QDateTime, int>();
@@ -89,8 +91,11 @@ void ChartWidget::updateChartByDate(const int stationId, const QString &stationN
    for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
       *slotsSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), iter.value());
 
+   const auto capacity = bikesData.begin().value() + ebikesData.begin().value() + slotsData.begin().value();
+
    createAxisTiming(interval);
    updateChartAxis();
+   createAxisY(capacity);
 }
 
 void ChartWidget::updateChartByWeekday(const int stationId, const QString &stationName, const int interval, const int weekday)
@@ -120,9 +125,12 @@ void ChartWidget::updateChartByWeekday(const int stationId, const QString &stati
    for (auto iter = slotsData.constBegin(); iter != slotsData.constEnd(); ++iter)
       *slotsSeries << QPointF(static_cast<qreal>(iter.key().toMSecsSinceEpoch()), iter.value());
 
+   const auto capacity = bikesData.begin().value() + ebikesData.begin().value() + slotsData.begin().value();
+
    createAxisTiming(interval, weekday);
 
    updateChartAxis();
+   createAxisY(capacity);
 }
 
 void ChartWidget::updateChartGeneralInfo(const int stationId, const QString &stationName)

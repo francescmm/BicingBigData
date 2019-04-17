@@ -28,7 +28,7 @@ public:
    void enbleSoftLine(bool enable = true) { softLine = enable; }
 
 private:
-   void createAxisY();
+   void createAxisY(int maxValue = 30);
    void createAxisTimeInDay(int interval);
    void updateChartGeneralInfo(int stationId, const QString &stationName);
    void createAndCustomizeSeries(int interval);

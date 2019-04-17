@@ -6,7 +6,7 @@
 
 struct Station
 {
-   int id = 0;
+   int id = -1;
    float latitude = 0.0;
    float longitude = 0.0;
    QString streetName;
